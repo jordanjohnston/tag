@@ -27,7 +27,7 @@ var ErrNoTagsFound = errors.New("no tags found")
 // ReadFrom detects and parses audio file metadata tags (currently supports ID3v1,2.{2,3,4}, MP4, FLAC/OGG).
 // Returns non-nil error if the format of the given data could not be determined, or if there was a problem
 // parsing the data.
-func ReadFrom(r io.ReadSeeker) (Metadata, error) {
+func ReadFrom(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	b, err := readBytes(r, 11)
 	if err != nil {
 		return nil, err
@@ -40,60 +40,22 @@ func ReadFrom(r io.ReadSeeker) (Metadata, error) {
 
 	switch {
 	case string(b[0:4]) == "fLaC":
-		return ReadFLACTags(r, true)
+		return ReadFLACTags(r, getPics)
 
 	case string(b[0:4]) == "OggS":
-		return ReadOGGTags(r, true)
+		return ReadOGGTags(r, getPics)
 
 	case string(b[4:8]) == "ftyp":
-		return ReadAtoms(r, true)
+		return ReadAtoms(r, getPics)
 
 	case string(b[0:3]) == "ID3":
-		return ReadID3v2Tags(r, true)
+		return ReadID3v2Tags(r, getPics)
 
 	case string(b[0:4]) == "DSD ":
-		return ReadDSFTags(r, true)
+		return ReadDSFTags(r, getPics)
 	}
 
-	m, err := ReadID3v1Tags(r, true)
-	if err != nil {
-		if err == ErrNotID3v1 {
-			err = ErrNoTagsFound
-		}
-		return nil, err
-	}
-	return m, nil
-}
-
-func ReadFromNoPictures(r io.ReadSeeker) (Metadata, error) {
-	b, err := readBytes(r, 11)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = r.Seek(-11, io.SeekCurrent)
-	if err != nil {
-		return nil, fmt.Errorf("could not seek back to original position: %v", err)
-	}
-
-	switch {
-	case string(b[0:4]) == "fLaC":
-		return ReadFLACTags(r, false)
-
-	case string(b[0:4]) == "OggS":
-		return ReadOGGTags(r, false)
-
-	case string(b[4:8]) == "ftyp":
-		return ReadAtoms(r, false)
-
-	case string(b[0:3]) == "ID3":
-		return ReadID3v2Tags(r, false)
-
-	case string(b[0:4]) == "DSD ":
-		return ReadDSFTags(r, false)
-	}
-
-	m, err := ReadID3v1Tags(r, false)
+	m, err := ReadID3v1Tags(r, getPics)
 	if err != nil {
 		if err == ErrNotID3v1 {
 			err = ErrNoTagsFound
