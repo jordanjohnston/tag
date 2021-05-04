@@ -220,7 +220,7 @@ func readID3v2_4FrameHeader(r io.Reader) (name string, size uint, headerSize uin
 }
 
 // readID3v2Frames reads ID3v2 frames from the given reader using the ID3v2Header.
-func readID3v2Frames(r io.Reader, offset uint, h *id3v2Header) (map[string]interface{}, error) {
+func readID3v2Frames(r io.Reader, offset uint, h *id3v2Header, getPics bool) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
 	for offset < h.Size {
@@ -368,18 +368,22 @@ func readID3v2Frames(r io.Reader, offset uint, h *id3v2Header) (map[string]inter
 			result[rawName] = t
 
 		case name == "APIC":
-			p, err := readAPICFrame(b)
-			if err != nil {
-				return nil, err
+			if getPics {
+				p, err := readAPICFrame(b)
+				if err != nil {
+					return nil, err
+				}
+				result[rawName] = p
 			}
-			result[rawName] = p
 
 		case name == "PIC":
-			p, err := readPICFrame(b)
-			if err != nil {
-				return nil, err
+			if getPics {
+				p, err := readPICFrame(b)
+				if err != nil {
+					return nil, err
+				}
+				result[rawName] = p
 			}
-			result[rawName] = p
 
 		default:
 			result[rawName] = b
@@ -414,7 +418,7 @@ func (r *unsynchroniser) Read(p []byte) (int, error) {
 
 // ReadID3v2Tags parses ID3v2.{2,3,4} tags from the io.ReadSeeker into a Metadata, returning
 // non-nil error on failure.
-func ReadID3v2Tags(r io.ReadSeeker) (Metadata, error) {
+func ReadID3v2Tags(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	h, offset, err := readID3v2Header(r)
 	if err != nil {
 		return nil, err
@@ -425,7 +429,7 @@ func ReadID3v2Tags(r io.ReadSeeker) (Metadata, error) {
 		ur = &unsynchroniser{Reader: r}
 	}
 
-	f, err := readID3v2Frames(ur, offset, h)
+	f, err := readID3v2Frames(ur, offset, h, getPics)
 	if err != nil {
 		return nil, err
 	}

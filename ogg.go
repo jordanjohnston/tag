@@ -19,7 +19,7 @@ const (
 // metadata in a Metadata implementation, or non-nil error if there was a problem.
 // See http://www.xiph.org/vorbis/doc/Vorbis_I_spec.html
 // and http://www.xiph.org/ogg/doc/framing.html for details.
-func ReadOGGTags(r io.ReadSeeker) (Metadata, error) {
+func ReadOGGTags(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	oggs, err := readString(r, 4)
 	if err != nil {
 		return nil, err

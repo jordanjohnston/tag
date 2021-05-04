@@ -40,22 +40,60 @@ func ReadFrom(r io.ReadSeeker) (Metadata, error) {
 
 	switch {
 	case string(b[0:4]) == "fLaC":
-		return ReadFLACTags(r)
+		return ReadFLACTags(r, true)
 
 	case string(b[0:4]) == "OggS":
-		return ReadOGGTags(r)
+		return ReadOGGTags(r, true)
 
 	case string(b[4:8]) == "ftyp":
-		return ReadAtoms(r)
+		return ReadAtoms(r, true)
 
 	case string(b[0:3]) == "ID3":
-		return ReadID3v2Tags(r)
+		return ReadID3v2Tags(r, true)
 
 	case string(b[0:4]) == "DSD ":
-		return ReadDSFTags(r)
+		return ReadDSFTags(r, true)
 	}
 
-	m, err := ReadID3v1Tags(r)
+	m, err := ReadID3v1Tags(r, true)
+	if err != nil {
+		if err == ErrNotID3v1 {
+			err = ErrNoTagsFound
+		}
+		return nil, err
+	}
+	return m, nil
+}
+
+func ReadFromNoPictures(r io.ReadSeeker) (Metadata, error) {
+	b, err := readBytes(r, 11)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.Seek(-11, io.SeekCurrent)
+	if err != nil {
+		return nil, fmt.Errorf("could not seek back to original position: %v", err)
+	}
+
+	switch {
+	case string(b[0:4]) == "fLaC":
+		return ReadFLACTags(r, false)
+
+	case string(b[0:4]) == "OggS":
+		return ReadOGGTags(r, false)
+
+	case string(b[4:8]) == "ftyp":
+		return ReadAtoms(r, false)
+
+	case string(b[0:3]) == "ID3":
+		return ReadID3v2Tags(r, false)
+
+	case string(b[0:4]) == "DSD ":
+		return ReadDSFTags(r, false)
+	}
+
+	m, err := ReadID3v1Tags(r, false)
 	if err != nil {
 		if err == ErrNotID3v1 {
 			err = ErrNoTagsFound

@@ -12,7 +12,7 @@ import (
 // ReadDSFTags reads DSF metadata from the io.ReadSeeker, returning the resulting
 // metadata in a Metadata implementation, or non-nil error if there was a problem.
 // samples: http://www.2l.no/hires/index.html
-func ReadDSFTags(r io.ReadSeeker) (Metadata, error) {
+func ReadDSFTags(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	dsd, err := readString(r, 4)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func ReadDSFTags(r io.ReadSeeker) (Metadata, error) {
 		return nil, err
 	}
 
-	id3, err := ReadID3v2Tags(r)
+	id3, err := ReadID3v2Tags(r, getPics)
 	if err != nil {
 		return nil, err
 	}

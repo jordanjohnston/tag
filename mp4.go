@@ -68,16 +68,16 @@ type metadataMP4 struct {
 
 // ReadAtoms reads MP4 metadata atoms from the io.ReadSeeker into a Metadata, returning
 // non-nil error if there was a problem.
-func ReadAtoms(r io.ReadSeeker) (Metadata, error) {
+func ReadAtoms(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	m := metadataMP4{
 		data:     make(map[string]interface{}),
 		fileType: UnknownFileType,
 	}
-	err := m.readAtoms(r)
+	err := m.readAtoms(r, getPics)
 	return m, err
 }
 
-func (m metadataMP4) readAtoms(r io.ReadSeeker) error {
+func (m metadataMP4) readAtoms(r io.ReadSeeker, getPics bool) error {
 	for {
 		name, size, err := readAtomHeader(r)
 		if err != nil {
@@ -97,7 +97,7 @@ func (m metadataMP4) readAtoms(r io.ReadSeeker) error {
 			fallthrough
 
 		case "moov", "udta", "ilst":
-			return m.readAtoms(r)
+			return m.readAtoms(r, getPics)
 		}
 
 		_, ok := atoms[name]
@@ -122,14 +122,14 @@ func (m metadataMP4) readAtoms(r io.ReadSeeker) error {
 			continue
 		}
 
-		err = m.readAtomData(r, name, size-8, data)
+		err = m.readAtomData(r, name, size-8, data, getPics)
 		if err != nil {
 			return err
 		}
 	}
 }
 
-func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, processedData []string) error {
+func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, processedData []string, getPics bool) error {
 	var b []byte
 	var err error
 	var contentType string

@@ -25,7 +25,7 @@ const (
 
 // ReadFLACTags reads FLAC metadata from the io.ReadSeeker, returning the resulting
 // metadata in a Metadata implementation, or non-nil error if there was a problem.
-func ReadFLACTags(r io.ReadSeeker) (Metadata, error) {
+func ReadFLACTags(r io.ReadSeeker, getPics bool) (Metadata, error) {
 	flac, err := readString(r, 4)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func ReadFLACTags(r io.ReadSeeker) (Metadata, error) {
 	}
 
 	for {
-		last, err := m.readFLACMetadataBlock(r)
+		last, err := m.readFLACMetadataBlock(r, getPics)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +55,7 @@ type metadataFLAC struct {
 	*metadataVorbis
 }
 
-func (m *metadataFLAC) readFLACMetadataBlock(r io.ReadSeeker) (last bool, err error) {
+func (m *metadataFLAC) readFLACMetadataBlock(r io.ReadSeeker, getPics bool) (last bool, err error) {
 	blockHeader, err := readBytes(r, 1)
 	if err != nil {
 		return
@@ -76,7 +76,9 @@ func (m *metadataFLAC) readFLACMetadataBlock(r io.ReadSeeker) (last bool, err er
 		err = m.readVorbisComment(r)
 
 	case pictureBlock:
-		err = m.readPictureBlock(r)
+		if getPics {
+			err = m.readPictureBlock(r)
+		}
 
 	default:
 		_, err = r.Seek(int64(blockLen), io.SeekCurrent)
