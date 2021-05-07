@@ -204,10 +204,14 @@ func (m metadataMP4) readAtomData(r io.ReadSeeker, name string, size uint32, pro
 		data = getInt(b[:1])
 
 	case "jpeg", "png":
-		data = &Picture{
-			Ext:      contentType,
-			MIMEType: "image/" + contentType,
-			Data:     b,
+		if getPics {
+			data = &Picture{
+				Ext:      contentType,
+				MIMEType: "image/" + contentType,
+				Data:     b,
+			}
+		} else {
+			return nil
 		}
 	}
 	m.data[name] = data

@@ -383,8 +383,9 @@ func readID3v2Frames(r io.Reader, offset uint, h *id3v2Header, getPics bool) (ma
 					return nil, err
 				}
 				result[rawName] = p
+			} else {
+				return result, nil
 			}
-
 		default:
 			result[rawName] = b
 		}

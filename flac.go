@@ -78,6 +78,8 @@ func (m *metadataFLAC) readFLACMetadataBlock(r io.ReadSeeker, getPics bool) (las
 	case pictureBlock:
 		if getPics {
 			err = m.readPictureBlock(r)
+		} else {
+			return true, nil
 		}
 
 	default:
